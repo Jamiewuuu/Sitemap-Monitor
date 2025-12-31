@@ -1,0 +1,49 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// 网站表
+model Site {
+  id            String   @id @default(uuid())
+  name          String   // 网站名称
+  domain        String   @unique // 网站域名
+  crawlInterval String   @default("1d") // 抓取频率: 12h, 1d, 1w
+  lastCrawledAt DateTime? // 上次抓取时间
+  status        String   @default("active") // 状态: active, error
+  errorMessage  String?  // 错误信息
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  pages Page[]
+}
+
+// 页面表
+model Page {
+  id           String   @id @default(uuid())
+  siteId       String
+  url          String   @unique // 页面 URL
+  title        String   // 页面标题
+  discoveredAt DateTime @default(now()) // 发现时间
+  isRead       Boolean  @default(false) // 是否已读
+  createdAt    DateTime @default(now())
+
+  site Site @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@index([siteId])
+  @@index([isRead])
+  @@index([discoveredAt])
+}
+
+// 设置表
+model Setting {
+  key   String @id
+  value String
+}
